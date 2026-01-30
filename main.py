@@ -110,7 +110,7 @@ class DeepSeekOCR(MessagePackService):
         output_path = "/tmp/deepseek_ocr_output"
         os.makedirs(output_path, exist_ok=True)
         
-        # Run inference
+        # Run inference with eval_mode=True to get text output
         result = model.infer(
             tokenizer,
             prompt=full_prompt,
@@ -120,16 +120,13 @@ class DeepSeekOCR(MessagePackService):
             image_size=image_size,
             crop_mode=crop_mode,
             save_results=False,
-            test_compress=False
+            test_compress=False,
+            eval_mode=True
         )
         
-        # Extract text from result
-        if isinstance(result, dict):
-            text = result.get('text', str(result))
-            tokens = result.get('tokens', 0)
-        else:
-            text = str(result)
-            tokens = len(tokenizer.encode(text)) if text else 0
+        # Result is the decoded text string
+        text = result if result else ""
+        tokens = len(tokenizer.encode(text)) if text else 0
         
         return {
             "text": text,
