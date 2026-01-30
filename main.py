@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 from pydantic import Field
 
-from jb_service import JBService, method, run
+from jb_service import MessagePackService, method, run
 
 # Model will be loaded on first use or during setup
 MODEL = None
@@ -55,7 +55,7 @@ def get_model():
     return MODEL, TOKENIZER
 
 
-class DeepSeekOCR(JBService):
+class DeepSeekOCR(MessagePackService):
     """DeepSeek-OCR document understanding service."""
     
     @method
