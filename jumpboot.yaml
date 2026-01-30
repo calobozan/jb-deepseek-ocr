@@ -1,0 +1,113 @@
+name: deepseek-ocr
+version: 1.0.0
+description: DeepSeek-OCR - Document to Markdown with vision-language model
+
+capabilities:
+  - OCR with document understanding
+  - Convert documents/images to Markdown
+  - Table extraction
+  - GPU accelerated (requires ~16GB VRAM)
+
+runtime:
+  python: "3.11"
+  mode: persistent
+  transport: msgpack
+  startup_timeout: 120
+  packages:
+    - torch
+    - transformers==4.46.3
+    - tokenizers==0.20.3
+    - einops
+    - addict
+    - easydict
+    - pillow
+    - pydantic>=2.0
+    - git+https://github.com/calobozan/jb-service.git
+
+resources:
+  gpu: true
+  vram_gb: 16
+
+setup:
+  method: setup
+  timeout: 900  # 15 min for model download
+
+rpc:
+  methods:
+    setup:
+      description: Download and initialize the model (called automatically on install)
+      output:
+        type: object
+        properties:
+          status: { type: string }
+          model_loaded: { type: boolean }
+    
+    ocr:
+      description: Extract text from an image
+      input:
+        type: object
+        properties:
+          image:
+            type: file
+            description: Image file to process
+          prompt:
+            type: string
+            default: "Free OCR."
+            description: Prompt for OCR (e.g., "Free OCR." or "Convert the document to markdown.")
+          base_size:
+            type: integer
+            default: 1024
+            description: Base image size (512=Tiny, 640=Small, 1024=Base, 1280=Large)
+          image_size:
+            type: integer
+            default: 640
+            description: Processing image size
+          crop_mode:
+            type: boolean
+            default: true
+            description: Enable crop mode for better detail extraction
+        required: [image]
+      output:
+        type: object
+        properties:
+          text:
+            type: string
+            description: Extracted text/markdown
+          tokens:
+            type: integer
+            description: Number of tokens generated
+    
+    to_markdown:
+      description: Convert document image to Markdown format
+      input:
+        type: object
+        properties:
+          image:
+            type: file
+            description: Document image to convert
+          base_size:
+            type: integer
+            default: 1024
+          image_size:
+            type: integer
+            default: 640
+          crop_mode:
+            type: boolean
+            default: true
+        required: [image]
+      output:
+        type: object
+        properties:
+          markdown:
+            type: string
+            description: Document converted to Markdown
+          tokens:
+            type: integer
+    
+    health:
+      description: Health check
+
+health:
+  method: health
+  interval: 60
+  failure_threshold: 3
